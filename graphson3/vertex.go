@@ -1,7 +1,9 @@
-package graphson
+package graphson3
 
 import (
 	"strings"
+
+	"github.com/dnoberon/graphson"
 
 	"github.com/buger/jsonparser"
 )
@@ -9,36 +11,42 @@ import (
 const vertexTypeName = "g:Vertex"
 const vertexPropertyTypeName = "g:VertexProperty"
 
+// Vertex mirrors the basic Vertex structure defined by GraphSON and Gremlin. "g:Vertex" as defined GraphSON 3.0 name.
 type Vertex struct {
-	ID         interface{}                 `json:"id"`
+	ID         interface{}                 `json:"id"` // ID as interface{}, different providers use different ID types
 	Label      string                      `json:"label"`
 	Properties map[string][]VertexProperty `json:"properties"`
 }
 
+// VertexProperty mirrors the basic Vertex Property structure defined by GraphSON and Gremlin. "g:VertexProperty" as
+// defined GraphSON 3.0 name.
 type VertexProperty struct {
-	ID         interface{}            `json:"id"`
+	ID         interface{}            `json:"id"` // ID as interface{}, different providers use different ID types
 	Value      string                 `json:"value"`
 	Label      string                 `json:"label"`
 	Properties map[string]interface{} `json:"properties"`
 }
 
-func parseVertex(in []byte) (v Vertex, err error) {
+// ParseVertex expects the input to be valid JSON and to be a single Vertex record. See either the testing file for sample
+// vertex json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_vertex_3.
+func ParseVertex(in []byte) (v Vertex, err error) {
 	v.Properties = map[string][]VertexProperty{}
 
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != vertexTypeName {
-		return v, ParsingError{err, "@type", "parseVertex"}
+		return v, graphson.ParsingError{err, "@type", "parseVertex"}
 	}
 
+	// value location mapping on original json record, using the jsonparser package to avoid as much reflection as we can
 	var paths = [][]string{
 		{"@value", "label"},
 		{"@value", "id", "@value"},
 		{"@value", "properties"},
 	}
 
-	parsingErrors := ParsingErrors{}
+	parsingErrors := graphson.ParsingErrors{}
 
 	jsonparser.EachKey(in, func(idx int, value []byte, vt jsonparser.ValueType, err error) {
-		currentError := ParsingError{nil, strings.Join(paths[idx], " "), "parseVertex"}
+		currentError := graphson.ParsingError{nil, strings.Join(paths[idx], " "), "parseVertex"}
 
 		if err != nil {
 			currentError.Message = err.Error()
@@ -57,7 +65,7 @@ func parseVertex(in []byte) (v Vertex, err error) {
 			v.Label = label
 
 		case 1: // @value -> label -> @value
-			id, e := parsedToType(in, vt)
+			id, e := parsedToType(value, vt)
 			if e != nil {
 				currentError.Message = e.Error()
 				break
@@ -66,26 +74,22 @@ func parseVertex(in []byte) (v Vertex, err error) {
 			v.ID = id
 
 		case 2: // @value -> properties (VertexProperty)
-			_, e := jsonparser.ArrayEach(value, func(prop []byte, dataType jsonparser.ValueType, offset int, err error) {
-				propertyName, e := jsonparser.ParseString(prop)
+			e := jsonparser.ObjectEach(value, func(key []byte, prop []byte, dataType jsonparser.ValueType, offset int) error {
+				propertyName, e := jsonparser.ParseString(key)
 				if e != nil {
 					currentError.Message = e.Error()
-					return
+					return e
 				}
 
-				property, _, _, e := jsonparser.Get(value, propertyName)
+				parsedProperties, e := parseVertexProperties(prop)
 				if e != nil {
 					currentError.Message = e.Error()
-					return
-				}
-
-				parsedProperties, e := parseVertexProperties(property)
-				if e != nil {
-					currentError.Message = e.Error()
-					return
+					return e
 				}
 
 				v.Properties[propertyName] = append(v.Properties[propertyName], parsedProperties...)
+
+				return nil
 			})
 
 			if e != nil {
@@ -100,36 +104,23 @@ func parseVertex(in []byte) (v Vertex, err error) {
 
 	}, paths...)
 
-	return v, parsingErrors.combine()
+	return v, parsingErrors.Combine()
 }
 
-func parseVertexProperties(in []byte) (properties []VertexProperty, err error) {
-	parsingErrors := ParsingErrors{}
+func parseVertexProperties(in []byte) ([]VertexProperty, error) {
+	properties := []VertexProperty{}
+	parsingErrors := graphson.ParsingErrors{}
 
-	_, err = jsonparser.ArrayEach(in, func(prop []byte, dataType jsonparser.ValueType, offset int, err error) {
-		currentError := ParsingError{nil, "parseVertexProperties", "properties"}
+	_, err := jsonparser.ArrayEach(in, func(prop []byte, dataType jsonparser.ValueType, offset int, err error) {
+		currentError := graphson.ParsingError{nil, "parseVertexProperties", "properties"}
 
-		propertyName, e := jsonparser.ParseString(prop)
+		parsedProperty, e := ParseVertexProperty(prop)
 		if e != nil {
 			currentError.Message = e.Error()
 			return
 		}
 
-		property, _, _, e := jsonparser.Get(in, propertyName)
-		if e != nil {
-			currentError.Message = e.Error()
-			return
-		}
-
-		_, e = jsonparser.ArrayEach(property, func(p []byte, dataType jsonparser.ValueType, offset int, err error) {
-			parsedProperty, e := parseVertexProperty(p)
-			if e != nil {
-				currentError.Message = e.Error()
-				return
-			}
-
-			properties = append(properties, parsedProperty)
-		})
+		properties = append(properties, parsedProperty)
 
 		if e != nil {
 			currentError.Message = e.Error()
@@ -139,19 +130,22 @@ func parseVertexProperties(in []byte) (properties []VertexProperty, err error) {
 	})
 
 	if err != nil {
-		return properties, ParsingError{err.Error(), "parseVertexProperties", "properties"}
+		return properties, graphson.ParsingError{err.Error(), "parseVertexProperties", "properties"}
 	}
 
-	return properties, parsingErrors.combine()
+	return properties, parsingErrors.Combine()
 }
 
-func parseVertexProperty(in []byte) (property VertexProperty, err error) {
+// ParseVertexProperty expects the input to be valid JSON and to be a single Vertex Property record. See either the testing file for sample
+// vertex json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_vertexproperty_3.
+func ParseVertexProperty(in []byte) (property VertexProperty, err error) {
 	property.Properties = map[string]interface{}{}
 
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != vertexPropertyTypeName {
-		return property, ParsingError{err, "@type", "parseVertexProperty"}
+		return property, graphson.ParsingError{err, "@type", "parseVertexProperty"}
 	}
 
+	// value location mapping on original json record, using the jsonparser package to avoid as much reflection as we can
 	var paths = [][]string{
 		{"@value", "label"},
 		{"@value", "id", "@value"},
@@ -159,10 +153,10 @@ func parseVertexProperty(in []byte) (property VertexProperty, err error) {
 		{"@value", "properties"},
 	}
 
-	parsingErrors := ParsingErrors{}
+	parsingErrors := graphson.ParsingErrors{}
 
 	jsonparser.EachKey(in, func(idx int, value []byte, vt jsonparser.ValueType, err error) {
-		currentError := ParsingError{nil, strings.Join(paths[idx], " "), "parseVertex"}
+		currentError := graphson.ParsingError{nil, strings.Join(paths[idx], " "), "parseVertex"}
 
 		if err != nil {
 			currentError.Message = err.Error()
@@ -199,30 +193,33 @@ func parseVertexProperty(in []byte) (property VertexProperty, err error) {
 			property.Value = pValue
 
 		case 3: // @value -> properties
-			_, e := jsonparser.ArrayEach(value, func(prop []byte, dataType jsonparser.ValueType, offset int, err error) {
-				propertyName, e := jsonparser.ParseString(prop)
+			e := jsonparser.ObjectEach(value, func(key []byte, prop []byte, dataType jsonparser.ValueType, offset int) error {
+				propertyName, e := jsonparser.ParseString(key)
 				if e != nil {
 					currentError.Message = e.Error()
-					return
+					return currentError
 				}
 
 				p, pType, _, e := jsonparser.Get(value, propertyName, "@value")
 				if e != nil {
 					currentError.Message = e.Error()
-					return
+					return currentError
 				}
 
 				property.Properties[propertyName], e = parsedToType(p, pType)
 				if e != nil {
 					currentError.Message = e.Error()
-					return
+					return currentError
 				}
+
+				return nil
 			})
 
 			if e != nil {
 				currentError.Message = e.Error()
 				break
 			}
+
 		}
 
 		if currentError.Message != nil {
@@ -231,5 +228,5 @@ func parseVertexProperty(in []byte) (property VertexProperty, err error) {
 
 	}, paths...)
 
-	return property, parsingErrors.combine()
+	return property, parsingErrors.Combine()
 }

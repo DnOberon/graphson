@@ -1,4 +1,4 @@
-package graphson
+package graphson3
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestParseVertex(t *testing.T) {
-	vertex, err := parseVertex([]byte(vertex30))
+	vertex, err := ParseVertex([]byte(vertex30))
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), vertex.ID)
 	assert.Equal(t, "person", vertex.Label)
@@ -19,7 +19,7 @@ func TestParseVertex(t *testing.T) {
 }
 
 func TestParseVertexProperty(t *testing.T) {
-	property, err := parseVertexProperty([]byte(vertexProperty30))
+	property, err := ParseVertexProperty([]byte(vertexProperty30))
 	assert.Nil(t, err)
 	assert.Equal(t, int64(6), property.ID)
 	assert.Equal(t, "san diego", property.Value)

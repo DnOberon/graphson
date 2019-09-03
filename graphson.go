@@ -1,72 +1,18 @@
+// Copyright [2019] [John Darrington]
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package graphson provides a parser for GraphSON structured json data. This interface is primarily consumed by the
+// gremlin go language variant. It provides a GraphSON version agnostic interface to the user, though GraphSON 3.0+ is
+// currently covered. Visit http://tinkerpop.apache.org/docs/3.4.2/dev/io/#graphson-3d0 for more information
 package graphson
-
-import (
-	"errors"
-	"fmt"
-	"math"
-	"strings"
-
-	"github.com/buger/jsonparser"
-)
-
-type ParsingError struct {
-	Message   interface{}
-	Operation string
-	Field     string
-}
-
-func (e ParsingError) Error() string {
-	return fmt.Sprintf("%v: field: %s operation: %s", e.Message, e.Field, e.Operation)
-}
-
-type ParsingErrors []ParsingError
-
-func (pe ParsingErrors) combine() error {
-	errorMessages := []interface{}{}
-	operations := []string{}
-	fields := []string{}
-
-	if len(errorMessages) == 0 && len(operations) == 0 && len(fields) == 0 {
-		return nil
-	}
-
-	for _, err := range pe {
-		errorMessages = append(errorMessages, err.Message)
-		operations = append(operations, err.Operation)
-		fields = append(fields, err.Field)
-	}
-
-	return ParsingError{fmt.Sprintf("multiple parsing errors: [%v]", errorMessages),
-		strings.Join(operations, ","),
-		strings.Join(fields, ",")}
-}
-
-func parsedToType(in []byte, vt jsonparser.ValueType) (interface{}, error) {
-
-	switch vt {
-	case jsonparser.String:
-		return jsonparser.ParseString(in)
-
-	case jsonparser.Number:
-		n, err := jsonparser.ParseFloat(in)
-		if err != nil {
-			return nil, err
-		}
-
-		if math.Trunc(n) == n {
-			return int64(n), nil
-		}
-
-		return n, nil
-	case jsonparser.Boolean:
-		return jsonparser.ParseBoolean(in)
-
-	case jsonparser.Unknown:
-		return in, errors.New("unknown type or invalid data")
-
-	case jsonparser.Null:
-		return in, errors.New("unknown type or invalid data")
-	}
-
-	return in, nil
-}

@@ -1,4 +1,4 @@
-package graphson
+package graphson3
 
 const valuePairSimple30 = `{"@type": "g:Int64","@value": 1}`
 
@@ -16,7 +16,7 @@ const vertex30 = `{
         "@value" : {
           "id" : {
             "@type" : "g:Int64",
-            "@value" : 0
+            "@value" : 1
           },
           "value" : "marko",
           "label" : "name"
@@ -158,7 +158,7 @@ const edge30 = `{
   }
 }`
 
-const property = `{
+const property30 = `{
   "@type" : "g:Property",
   "@value" : {
     "key" : "since",
