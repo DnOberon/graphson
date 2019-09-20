@@ -8,29 +8,29 @@ import (
 	"github.com/buger/jsonparser"
 )
 
-const vertexTypeName = "g:Vertex"
-const vertexPropertyTypeName = "g:VertexProperty"
+const vertexTypeName = "g:VertexRecord"
+const vertexPropertyTypeName = "g:VertexPropertyRecord"
 
-// Vertex mirrors the basic Vertex structure defined by GraphSON and Gremlin. "g:Vertex" as defined GraphSON 3.0 name.
-type Vertex struct {
-	ID         interface{}                 `json:"id"` // ID as interface{}, different providers use different ID types
-	Label      string                      `json:"label"`
-	Properties map[string][]VertexProperty `json:"properties"`
+// VertexRecord mirrors the basic VertexRecord structure defined by GraphSON and Gremlin. "g:VertexRecord" as defined GraphSON 3.0 name.
+type VertexRecord struct {
+	ID         interface{}                       `json:"id"` // ID as interface{}, different providers use different ID types
+	Label      string                            `json:"label"`
+	Properties map[string][]VertexPropertyRecord `json:"properties"`
 }
 
-// VertexProperty mirrors the basic Vertex Property structure defined by GraphSON and Gremlin. "g:VertexProperty" as
+// VertexPropertyRecord mirrors the basic VertexRecord Property structure defined by GraphSON and Gremlin. "g:VertexPropertyRecord" as
 // defined GraphSON 3.0 name.
-type VertexProperty struct {
+type VertexPropertyRecord struct {
 	ID         interface{}            `json:"id"` // ID as interface{}, different providers use different ID types
 	Value      string                 `json:"value"`
 	Label      string                 `json:"label"`
 	Properties map[string]interface{} `json:"properties"`
 }
 
-// ParseVertex expects the input to be valid JSON and to be a single Vertex record. See either the testing file for sample
+// ParseVertex expects the input to be valid JSON and to be a single VertexRecord record. See either the testing file for sample
 // vertex json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_vertex_3.
-func ParseVertex(in []byte) (v Vertex, err error) {
-	v.Properties = map[string][]VertexProperty{}
+func ParseVertex(in []byte) (v VertexRecord, err error) {
+	v.Properties = map[string][]VertexPropertyRecord{}
 
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != vertexTypeName {
 		return v, graphson.ParsingError{err, "@type", "parseVertex"}
@@ -73,7 +73,7 @@ func ParseVertex(in []byte) (v Vertex, err error) {
 
 			v.ID = id
 
-		case 2: // @value -> properties (VertexProperty)
+		case 2: // @value -> properties (VertexPropertyRecord)
 			e := jsonparser.ObjectEach(value, func(key []byte, prop []byte, dataType jsonparser.ValueType, offset int) error {
 				propertyName, e := jsonparser.ParseString(key)
 				if e != nil {
@@ -107,8 +107,8 @@ func ParseVertex(in []byte) (v Vertex, err error) {
 	return v, parsingErrors.Combine()
 }
 
-func parseVertexProperties(in []byte) ([]VertexProperty, error) {
-	properties := []VertexProperty{}
+func parseVertexProperties(in []byte) ([]VertexPropertyRecord, error) {
+	properties := []VertexPropertyRecord{}
 	parsingErrors := graphson.ParsingErrors{}
 
 	_, err := jsonparser.ArrayEach(in, func(prop []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -136,9 +136,9 @@ func parseVertexProperties(in []byte) ([]VertexProperty, error) {
 	return properties, parsingErrors.Combine()
 }
 
-// ParseVertexProperty expects the input to be valid JSON and to be a single Vertex Property record. See either the testing file for sample
+// ParseVertexProperty expects the input to be valid JSON and to be a single VertexRecord Property record. See either the testing file for sample
 // vertex json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_vertexproperty_3.
-func ParseVertexProperty(in []byte) (property VertexProperty, err error) {
+func ParseVertexProperty(in []byte) (property VertexPropertyRecord, err error) {
 	property.Properties = map[string]interface{}{}
 
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != vertexPropertyTypeName {

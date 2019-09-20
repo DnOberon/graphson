@@ -11,7 +11,7 @@ import (
 const edgeTypename = "g:Edge"
 const propertyTypeName = "g:Property"
 
-type Edge struct {
+type EdgeRecord struct {
 	ID         interface{}         `json:"id"` // ID as interface{}, different providers use different ID types
 	Label      string              `json:"label"`
 	InVLabel   string              `json:"inVLabel"`
@@ -28,7 +28,7 @@ type Property struct {
 
 // ParseEdge expects the input to be valid JSON and to be a single Edge record. See either the testing file for sample
 // edge json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_edge_3.
-func ParseEdge(in []byte) (e Edge, err error) {
+func ParseEdge(in []byte) (e EdgeRecord, err error) {
 	e.Properties = map[string]Property{}
 
 	if typename, err := jsonparser.GetString(in, "@type"); err != nil || typename != edgeTypename {

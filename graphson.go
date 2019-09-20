@@ -13,6 +13,9 @@
 // limitations under the License.
 
 // Package graphson provides a parser for GraphSON structured json data. This interface is primarily consumed by the
-// gremlin go language variant. It provides a GraphSON version agnostic interface to the user, though GraphSON 3.0+ is
+// gremlin go language variant. It provides a GraphSON version agnostic interface to the user, though only GraphSON 3.0+ is
 // currently covered. Visit http://tinkerpop.apache.org/docs/3.4.2/dev/io/#graphson-3d0 for more information
 package graphson
+
+// TODO: Handle the following separately - List, Map, Site, Timestamp, Date
+// TODO: I like the pattern of returning a concrete type alias and providing methods for getting values out of them, copy that
