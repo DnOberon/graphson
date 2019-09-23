@@ -65,7 +65,7 @@ func (g GraphSONv3Parser) ParseVertex(in []byte) (v graphson.VertexRecord, err e
 					return e
 				}
 
-				parsedProperties, e := g.parseVertexProperties(prop)
+				parsedProperties, e := g.ParseVertexProperties(prop)
 				if e != nil {
 					currentError.Message = e.Error()
 					return e
@@ -91,7 +91,7 @@ func (g GraphSONv3Parser) ParseVertex(in []byte) (v graphson.VertexRecord, err e
 	return v, parsingErrors.Combine()
 }
 
-func (g GraphSONv3Parser) parseVertexProperties(in []byte) ([]graphson.VertexPropertyRecord, error) {
+func (g GraphSONv3Parser) ParseVertexProperties(in []byte) ([]graphson.VertexPropertyRecord, error) {
 	properties := []graphson.VertexPropertyRecord{}
 	parsingErrors := graphson.ParsingErrors{}
 

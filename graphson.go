@@ -17,6 +17,13 @@
 // currently covered. Visit http://tinkerpop.apache.org/docs/3.4.2/dev/io/#graphson-3d0 for more information
 package graphson
 
+// GraphSONParser enforces a standard set of functions that a GraphSON parser must satisfy. It is up to the individual
+// implementer to handle the parsing of any data types apart from Vertex, Vertex Property, Edge, Property, TinkerGraph, and Path.
 type GraphSONParser interface {
 	Parse(in []byte) (ValuePair, error)
+	ParseVertex(in []byte) (VertexRecord, error)
+	ParseVertexProperties(in []byte) ([]VertexPropertyRecord, error)
+	ParseVertexProperty(in []byte) (VertexPropertyRecord, error)
+	ParseEdge(in []byte) (EdgeRecord, error)
+	ParseProperty(in []byte) (Property, error)
 }

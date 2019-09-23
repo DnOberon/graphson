@@ -28,15 +28,14 @@ const (
 	Unknown
 )
 
-// VertexRecord mirrors the basic VertexRecord structure defined by GraphSON and Gremlin. "g:VertexRecord" as defined GraphSON 3.0 name.
+// VertexRecord mirrors the basic VertexRecord structure defined by GraphSON and Gremlin.
 type VertexRecord struct {
 	ID         interface{}                       `json:"id"` // ID as interface{}, different providers use different ID types
 	Label      string                            `json:"label"`
 	Properties map[string][]VertexPropertyRecord `json:"properties"`
 }
 
-// VertexPropertyRecord mirrors the basic VertexRecord Property structure defined by GraphSON and Gremlin. "g:VertexPropertyRecord" as
-// defined GraphSON 3.0 name.
+// VertexPropertyRecord mirrors the basic VertexRecord Property structure defined by GraphSON and Gremlin.
 type VertexPropertyRecord struct {
 	ID         interface{}          `json:"id"` // ID as interface{}, different providers use different ID types
 	Value      string               `json:"value"`
