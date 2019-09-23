@@ -8,62 +8,62 @@ import (
 )
 
 // Parse accepts a valid @type/@value pair and returns the parsed object. Additional operations can be used to discover type
-func Parse(in []byte) (interface{}, valueType, error) {
+func (g GraphSONv3Parser) Parse(in []byte) (graphson.ValuePair, error) {
 	typeName, err := getValueType(in)
 	if err != nil {
-		return nil, 0, err
+		return graphson.ValuePair{}, err
 	}
 
 	var out interface{}
 
 	switch typeName {
-	case Vertex:
-		out, err = ParseVertex(in)
-	case VertexProperty:
-		out, err = ParseVertexProperty(in)
-	case Edge:
-		out, err = ParseEdge(in)
-	case EdgeProperty:
-		out, err = ParseProperty(in)
-	case Set:
-		out, err = parseSet(in)
-	case List:
-		out, err = parseSet(in)
-	case Class:
-		out, err = parseClass(in)
-	case String:
+	case graphson.Vertex:
+		out, err = g.ParseVertex(in)
+	case graphson.VertexProperty:
+		out, err = g.ParseVertexProperty(in)
+	case graphson.Edge:
+		out, err = g.ParseEdge(in)
+	case graphson.EdgeProperty:
+		out, err = g.ParseProperty(in)
+	case graphson.Set:
+		out, err = g.parseSet(in)
+	case graphson.List:
+		out, err = g.parseSet(in)
+	case graphson.Class:
+		out, err = g.parseClass(in)
+	case graphson.String:
 		out, err = string(in), nil
-	case Boolean:
+	case graphson.Boolean:
 		out, err = string(in) == "true" || string(in) == "1", nil
-	case Int32:
-		out, err = parseInt32(in)
-	case Int64:
-		out, err = parseInt64(in)
-	case Float:
-		out, err = parseFloat64(in)
-	case Double:
-		out, err = parseFloat32(in)
-	case UUID:
-		out, err = parseUUID(in)
-	case Date:
-		out, err = parseTimestamp(in)
-	case Timestamp:
-		out, err = parseTimestamp(in)
+	case graphson.Int32:
+		out, err = g.parseInt32(in)
+	case graphson.Int64:
+		out, err = g.parseInt64(in)
+	case graphson.Float:
+		out, err = g.parseFloat64(in)
+	case graphson.Double:
+		out, err = g.parseFloat32(in)
+	case graphson.UUID:
+		out, err = g.parseUUID(in)
+	case graphson.Date:
+		out, err = g.parseTimestamp(in)
+	case graphson.Timestamp:
+		out, err = g.parseTimestamp(in)
 	}
 
-	return out, typeName, err
+	return graphson.ValuePair{Type: typeName, Value: out}, err
 }
 
 // parseSet also applies to the g:List type, Formatting between the two types is exactly the same
-func parseSet(in []byte) ([]interface{}, error) {
-	var out []interface{}
+func (g GraphSONv3Parser) parseSet(in []byte) ([]graphson.ValuePair, error) {
+	var out []graphson.ValuePair
 
 	vt, err := getValueType(in)
 	if err != nil {
 		return nil, err
 	}
 
-	if vt != Set {
+	if vt != graphson.Set {
 		return nil, graphson.ParsingError{Message: "provided input not a g:Set type", Operation: "parseSet", Field: "@type"}
 	}
 
@@ -82,20 +82,20 @@ func parseSet(in []byte) ([]interface{}, error) {
 			return
 		}
 
-		v, _, err := Parse(value)
+		vp, err := g.Parse(value)
 		if err != nil {
 			currentError.Message = err.Error()
 			parsingErrors = append(parsingErrors, currentError)
 			return
 		}
 
-		out = append(out, v)
+		out = append(out, vp)
 	})
 
 	return out, parsingErrors.Combine()
 }
 
-func parseMap(in []byte) (map[interface{}]interface{}, error) {
+func (g GraphSONv3Parser) parseMap(in []byte) (map[interface{}]interface{}, error) {
 	out := map[interface{}]interface{}{}
 
 	vt, err := getValueType(in)
@@ -103,20 +103,20 @@ func parseMap(in []byte) (map[interface{}]interface{}, error) {
 		return nil, err
 	}
 
-	if vt != Map {
+	if vt != graphson.Map {
 		return nil, graphson.ParsingError{Message: "provided input not a g:Map type", Operation: "parseMap", Field: "@type"}
 	}
 
 	return out, nil
 }
 
-func parseInt32(in []byte) (int, error) {
+func (g GraphSONv3Parser) parseInt32(in []byte) (int, error) {
 	vt, err := getValueType(in)
 	if err != nil {
 		return 0, err
 	}
 
-	if vt != Int32 {
+	if vt != graphson.Int32 {
 		return 0, graphson.ParsingError{Message: "provided input not a g:Int32 type", Operation: "parseInt32", Field: "@type"}
 	}
 
@@ -126,26 +126,26 @@ func parseInt32(in []byte) (int, error) {
 	return int(value), err
 }
 
-func parseInt64(in []byte) (int64, error) {
+func (g GraphSONv3Parser) parseInt64(in []byte) (int64, error) {
 	vt, err := getValueType(in)
 	if err != nil {
 		return 0, err
 	}
 
-	if vt != Int64 {
+	if vt != graphson.Int64 {
 		return 0, graphson.ParsingError{Message: "provided input not a g:Int64 type", Operation: "parseInt64", Field: "@type"}
 	}
 
 	return jsonparser.GetInt(in, "@value")
 }
 
-func parseFloat32(in []byte) (float32, error) {
+func (g GraphSONv3Parser) parseFloat32(in []byte) (float32, error) {
 	vt, err := getValueType(in)
 	if err != nil {
 		return 0, err
 	}
 
-	if vt != Double {
+	if vt != graphson.Double {
 		return 0, graphson.ParsingError{Message: "provided input not a g:Float32 type", Operation: "parseFloat32", Field: "@type"}
 	}
 
@@ -154,26 +154,26 @@ func parseFloat32(in []byte) (float32, error) {
 	return float32(value), err
 }
 
-func parseFloat64(in []byte) (float64, error) {
+func (g GraphSONv3Parser) parseFloat64(in []byte) (float64, error) {
 	vt, err := getValueType(in)
 	if err != nil {
 		return 0, err
 	}
 
-	if vt != Float {
+	if vt != graphson.Float {
 		return 0, graphson.ParsingError{Message: "provided input not a g:Float64 type", Operation: "parseFloat64", Field: "@type"}
 	}
 
 	return jsonparser.GetFloat(in, "@value")
 }
 
-func parseTimestamp(in []byte) (time.Time, error) {
+func (g GraphSONv3Parser) parseTimestamp(in []byte) (time.Time, error) {
 	vt, err := getValueType(in)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	if vt != Timestamp && vt != Date {
+	if vt != graphson.Timestamp && vt != graphson.Date {
 		return time.Time{}, graphson.ParsingError{Message: "provided input not a g:Timestamp g:Date type", Operation: "parseTimestamp", Field: "@type"}
 	}
 
@@ -185,26 +185,26 @@ func parseTimestamp(in []byte) (time.Time, error) {
 	return time.Unix(value/10000, 0), nil
 }
 
-func parseClass(in []byte) (string, error) {
+func (g GraphSONv3Parser) parseClass(in []byte) (string, error) {
 	vt, err := getValueType(in)
 	if err != nil {
 		return "", err
 	}
 
-	if vt != Class {
+	if vt != graphson.Class {
 		return "", graphson.ParsingError{Message: "provided input not g:Class type", Operation: "parseClass", Field: "@type"}
 	}
 
 	return jsonparser.GetString(in, "@value")
 }
 
-func parseUUID(in []byte) (string, error) {
+func (g GraphSONv3Parser) parseUUID(in []byte) (string, error) {
 	vt, err := getValueType(in)
 	if err != nil {
 		return "", err
 	}
 
-	if vt != UUID {
+	if vt != graphson.UUID {
 		return "", graphson.ParsingError{Message: "provided input not g:UUID type", Operation: "parseClass", Field: "@type"}
 	}
 

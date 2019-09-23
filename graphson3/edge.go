@@ -22,13 +22,13 @@ type EdgeRecord struct {
 }
 
 type Property struct {
-	Key   string      `json:"key"`
-	Value interface{} `json:"value"`
+	Key   string             `json:"key"`
+	Value graphson.ValuePair `json:"value"`
 }
 
 // ParseEdge expects the input to be valid JSON and to be a single Edge record. See either the testing file for sample
 // edge json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_edge_3.
-func ParseEdge(in []byte) (e EdgeRecord, err error) {
+func (g GraphSONv3Parser) ParseEdge(in []byte) (e EdgeRecord, err error) {
 	e.Properties = map[string]Property{}
 
 	if typename, err := jsonparser.GetString(in, "@type"); err != nil || typename != edgeTypename {
@@ -120,7 +120,7 @@ func ParseEdge(in []byte) (e EdgeRecord, err error) {
 					return err
 				}
 
-				parsedProperty, err := ParseProperty(prop)
+				parsedProperty, err := g.ParseProperty(prop)
 				if err != nil {
 					currentError.Message = err.Error()
 					return err
@@ -144,7 +144,7 @@ func ParseEdge(in []byte) (e EdgeRecord, err error) {
 
 // ParseProperty expects the input to be valid JSON and to be a single Property record. See either the testing file for sample
 // property json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_property_3.
-func ParseProperty(in []byte) (property Property, err error) {
+func (g GraphSONv3Parser) ParseProperty(in []byte) (property Property, err error) {
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != propertyTypeName {
 		return property, graphson.ParsingError{err, "@type", "parseProperty"}
 	}
@@ -152,7 +152,7 @@ func ParseProperty(in []byte) (property Property, err error) {
 	// value location mapping on original json record, using the jsonparser package to avoid as much reflection as we can
 	var paths = [][]string{
 		{"@value", "key"},
-		{"@value", "value", "@value"},
+		{"@value", "value"},
 	}
 
 	parsingErrors := graphson.ParsingErrors{}
@@ -177,7 +177,7 @@ func ParseProperty(in []byte) (property Property, err error) {
 			property.Key = key
 
 		case 1: // @value -> @value -> value
-			val, e := parsedToType(value, vt)
+			val, e := g.Parse(value)
 			if e != nil {
 				currentError.Message = e.Error()
 				break

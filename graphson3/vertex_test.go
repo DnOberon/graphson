@@ -7,7 +7,8 @@ import (
 )
 
 func TestParseVertex(t *testing.T) {
-	vertex, err := ParseVertex([]byte(vertex30))
+	g := GraphSONv3Parser{}
+	vertex, err := g.ParseVertex([]byte(vertex30))
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), vertex.ID)
 	assert.Equal(t, "person", vertex.Label)
@@ -19,7 +20,8 @@ func TestParseVertex(t *testing.T) {
 }
 
 func TestParseVertexProperty(t *testing.T) {
-	property, err := ParseVertexProperty([]byte(vertexProperty30))
+	g := GraphSONv3Parser{}
+	property, err := g.ParseVertexProperty([]byte(vertexProperty30))
 	assert.Nil(t, err)
 	assert.Equal(t, int64(6), property.ID)
 	assert.Equal(t, "san diego", property.Value)
@@ -27,5 +29,5 @@ func TestParseVertexProperty(t *testing.T) {
 
 	p, ok := property.Properties["startTime"]
 	assert.True(t, ok)
-	assert.Equal(t, int64(1997), p)
+	assert.Equal(t, int(1997), p.Value)
 }

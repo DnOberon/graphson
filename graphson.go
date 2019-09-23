@@ -17,12 +17,19 @@
 // currently covered. Visit http://tinkerpop.apache.org/docs/3.4.2/dev/io/#graphson-3d0 for more information
 package graphson
 
-// TODO: Handle the following separately - List, Map, Site, Timestamp, Date
-// TODO: I like the pattern of returning a concrete type alias and providing methods for getting values out of them, copy that
-type valueType int
+type GraphSONParser interface {
+	Parse(in []byte) (ValuePair, error)
+}
+
+type ValuePair struct {
+	Type  ValueType
+	Value interface{}
+}
+
+type ValueType int
 
 const (
-	String = valueType(iota)
+	String = ValueType(iota)
 	Boolean
 	Class
 	Date

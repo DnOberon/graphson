@@ -7,7 +7,8 @@ import (
 )
 
 func TestParseEdge(t *testing.T) {
-	edge, err := ParseEdge([]byte(edge30))
+	g := GraphSONv3Parser{}
+	edge, err := g.ParseEdge([]byte(edge30))
 	assert.Nil(t, err)
 	assert.Equal(t, int64(13), edge.ID)
 	assert.Equal(t, "develops", edge.Label)
@@ -18,12 +19,13 @@ func TestParseEdge(t *testing.T) {
 	assert.Equal(t, "software", edge.InVLabel)
 	assert.Equal(t, int64(10), edge.InV)
 
-	assert.Equal(t, int64(2009), edge.Properties["since"].Value)
+	assert.Equal(t, 2009, edge.Properties["since"].Value.Value)
 }
 
 func TestParseProperty(t *testing.T) {
-	property, err := ParseProperty([]byte(property30))
+	g := GraphSONv3Parser{}
+	property, err := g.ParseProperty([]byte(property30))
 	assert.Nil(t, err)
-	assert.Equal(t, int64(2009), property.Value)
+	assert.Equal(t, 2009, property.Value.Value)
 	assert.Equal(t, "since", property.Key)
 }
