@@ -19,3 +19,25 @@ package graphson
 
 // TODO: Handle the following separately - List, Map, Site, Timestamp, Date
 // TODO: I like the pattern of returning a concrete type alias and providing methods for getting values out of them, copy that
+type valueType int
+
+const (
+	String = valueType(iota)
+	Boolean
+	Class
+	Date
+	Double
+	Float
+	Int64
+	Int32
+	List
+	Map
+	Timestamp
+	Set
+	UUID
+	Vertex
+	VertexProperty
+	Edge
+	EdgeProperty
+	Unknown
+)

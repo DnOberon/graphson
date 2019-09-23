@@ -1,7 +1,5 @@
 package graphson3
 
-const valuePairSimple30 = `{"@type": "g:Int64","@value": 1}`
-
 const vertex30 = `{
   "@type" : "g:VertexRecord",
   "@value" : {

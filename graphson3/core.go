@@ -1,45 +1,57 @@
 package graphson3
 
 import (
+	"time"
+
 	"github.com/buger/jsonparser"
 	"github.com/dnoberon/graphson"
 )
 
-// TODO: some kind of recursive parsing func for handling nested items in a set/map
-
 // Parse accepts a valid @type/@value pair and returns the parsed object. Additional operations can be used to discover type
-func Parse(in []byte) (interface{}, error) {
+func Parse(in []byte) (interface{}, valueType, error) {
 	typeName, err := getValueType(in)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
+
+	var out interface{}
 
 	switch typeName {
 	case Vertex:
-		return ParseVertex(in)
+		out, err = ParseVertex(in)
 	case VertexProperty:
-		return ParseVertexProperty(in)
+		out, err = ParseVertexProperty(in)
 	case Edge:
-		return ParseEdge(in)
+		out, err = ParseEdge(in)
 	case EdgeProperty:
-		return ParseProperty(in)
+		out, err = ParseProperty(in)
 	case Set:
-		return parseSet(in)
+		out, err = parseSet(in)
+	case List:
+		out, err = parseSet(in)
+	case Class:
+		out, err = parseClass(in)
 	case String:
-		return string(in), nil
+		out, err = string(in), nil
 	case Boolean:
-		return string(in) == "true" || string(in) == "1", nil
+		out, err = string(in) == "true" || string(in) == "1", nil
 	case Int32:
-		return parseInt32(in)
+		out, err = parseInt32(in)
 	case Int64:
-		return parseInt64(in)
+		out, err = parseInt64(in)
 	case Float:
-		return parseFloat64(in)
+		out, err = parseFloat64(in)
 	case Double:
-		return parseFloat32(in)
+		out, err = parseFloat32(in)
+	case UUID:
+		out, err = parseUUID(in)
+	case Date:
+		out, err = parseTimestamp(in)
+	case Timestamp:
+		out, err = parseTimestamp(in)
 	}
 
-	return nil, nil
+	return out, typeName, err
 }
 
 // parseSet also applies to the g:List type, Formatting between the two types is exactly the same
@@ -70,7 +82,7 @@ func parseSet(in []byte) ([]interface{}, error) {
 			return
 		}
 
-		v, err := Parse(value)
+		v, _, err := Parse(value)
 		if err != nil {
 			currentError.Message = err.Error()
 			parsingErrors = append(parsingErrors, currentError)
@@ -81,6 +93,21 @@ func parseSet(in []byte) ([]interface{}, error) {
 	})
 
 	return out, parsingErrors.Combine()
+}
+
+func parseMap(in []byte) (map[interface{}]interface{}, error) {
+	out := map[interface{}]interface{}{}
+
+	vt, err := getValueType(in)
+	if err != nil {
+		return nil, err
+	}
+
+	if vt != Map {
+		return nil, graphson.ParsingError{Message: "provided input not a g:Map type", Operation: "parseMap", Field: "@type"}
+	}
+
+	return out, nil
 }
 
 func parseInt32(in []byte) (int, error) {
@@ -138,4 +165,48 @@ func parseFloat64(in []byte) (float64, error) {
 	}
 
 	return jsonparser.GetFloat(in, "@value")
+}
+
+func parseTimestamp(in []byte) (time.Time, error) {
+	vt, err := getValueType(in)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if vt != Timestamp && vt != Date {
+		return time.Time{}, graphson.ParsingError{Message: "provided input not a g:Timestamp g:Date type", Operation: "parseTimestamp", Field: "@type"}
+	}
+
+	value, err := jsonparser.GetInt(in, "@value")
+	if err != nil {
+		return time.Time{}, graphson.ParsingError{Message: err.Error(), Operation: "parseTimestamp", Field: "@value"}
+	}
+
+	return time.Unix(value/10000, 0), nil
+}
+
+func parseClass(in []byte) (string, error) {
+	vt, err := getValueType(in)
+	if err != nil {
+		return "", err
+	}
+
+	if vt != Class {
+		return "", graphson.ParsingError{Message: "provided input not g:Class type", Operation: "parseClass", Field: "@type"}
+	}
+
+	return jsonparser.GetString(in, "@value")
+}
+
+func parseUUID(in []byte) (string, error) {
+	vt, err := getValueType(in)
+	if err != nil {
+		return "", err
+	}
+
+	if vt != UUID {
+		return "", graphson.ParsingError{Message: "provided input not g:UUID type", Operation: "parseClass", Field: "@type"}
+	}
+
+	return jsonparser.GetString(in, "@value")
 }
