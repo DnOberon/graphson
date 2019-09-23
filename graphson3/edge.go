@@ -11,25 +11,10 @@ import (
 const edgeTypename = "g:Edge"
 const propertyTypeName = "g:Property"
 
-type EdgeRecord struct {
-	ID         interface{}         `json:"id"` // ID as interface{}, different providers use different ID types
-	Label      string              `json:"label"`
-	InVLabel   string              `json:"inVLabel"`
-	OutVLabel  string              `json:"outVLabel"`
-	InV        interface{}         `json:"inV"`
-	OutV       interface{}         `json:"outV"`
-	Properties map[string]Property `json:"properties"`
-}
-
-type Property struct {
-	Key   string             `json:"key"`
-	Value graphson.ValuePair `json:"value"`
-}
-
 // ParseEdge expects the input to be valid JSON and to be a single Edge record. See either the testing file for sample
 // edge json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_edge_3.
-func (g GraphSONv3Parser) ParseEdge(in []byte) (e EdgeRecord, err error) {
-	e.Properties = map[string]Property{}
+func (g GraphSONv3Parser) ParseEdge(in []byte) (e graphson.EdgeRecord, err error) {
+	e.Properties = map[string]graphson.Property{}
 
 	if typename, err := jsonparser.GetString(in, "@type"); err != nil || typename != edgeTypename {
 		return e, graphson.ParsingError{err, "@type", "parseEdge"}
@@ -144,7 +129,7 @@ func (g GraphSONv3Parser) ParseEdge(in []byte) (e EdgeRecord, err error) {
 
 // ParseProperty expects the input to be valid JSON and to be a single Property record. See either the testing file for sample
 // property json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_property_3.
-func (g GraphSONv3Parser) ParseProperty(in []byte) (property Property, err error) {
+func (g GraphSONv3Parser) ParseProperty(in []byte) (property graphson.Property, err error) {
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != propertyTypeName {
 		return property, graphson.ParsingError{err, "@type", "parseProperty"}
 	}

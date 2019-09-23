@@ -20,31 +20,3 @@ package graphson
 type GraphSONParser interface {
 	Parse(in []byte) (ValuePair, error)
 }
-
-type ValuePair struct {
-	Type  ValueType
-	Value interface{}
-}
-
-type ValueType int
-
-const (
-	String = ValueType(iota)
-	Boolean
-	Class
-	Date
-	Double
-	Float
-	Int64
-	Int32
-	List
-	Map
-	Timestamp
-	Set
-	UUID
-	Vertex
-	VertexProperty
-	Edge
-	EdgeProperty
-	Unknown
-)

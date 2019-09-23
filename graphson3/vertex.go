@@ -11,26 +11,10 @@ import (
 const vertexTypeName = "g:VertexRecord"
 const vertexPropertyTypeName = "g:VertexPropertyRecord"
 
-// VertexRecord mirrors the basic VertexRecord structure defined by GraphSON and Gremlin. "g:VertexRecord" as defined GraphSON 3.0 name.
-type VertexRecord struct {
-	ID         interface{}                       `json:"id"` // ID as interface{}, different providers use different ID types
-	Label      string                            `json:"label"`
-	Properties map[string][]VertexPropertyRecord `json:"properties"`
-}
-
-// VertexPropertyRecord mirrors the basic VertexRecord Property structure defined by GraphSON and Gremlin. "g:VertexPropertyRecord" as
-// defined GraphSON 3.0 name.
-type VertexPropertyRecord struct {
-	ID         interface{}                   `json:"id"` // ID as interface{}, different providers use different ID types
-	Value      string                        `json:"value"`
-	Label      string                        `json:"label"`
-	Properties map[string]graphson.ValuePair `json:"properties"`
-}
-
 // ParseVertex expects the input to be valid JSON and to be a single VertexRecord record. See either the testing file for sample
 // vertex json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_vertex_3.
-func (g GraphSONv3Parser) ParseVertex(in []byte) (v VertexRecord, err error) {
-	v.Properties = map[string][]VertexPropertyRecord{}
+func (g GraphSONv3Parser) ParseVertex(in []byte) (v graphson.VertexRecord, err error) {
+	v.Properties = map[string][]graphson.VertexPropertyRecord{}
 
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != vertexTypeName {
 		return v, graphson.ParsingError{err, "@type", "parseVertex"}
@@ -107,8 +91,8 @@ func (g GraphSONv3Parser) ParseVertex(in []byte) (v VertexRecord, err error) {
 	return v, parsingErrors.Combine()
 }
 
-func (g GraphSONv3Parser) parseVertexProperties(in []byte) ([]VertexPropertyRecord, error) {
-	properties := []VertexPropertyRecord{}
+func (g GraphSONv3Parser) parseVertexProperties(in []byte) ([]graphson.VertexPropertyRecord, error) {
+	properties := []graphson.VertexPropertyRecord{}
 	parsingErrors := graphson.ParsingErrors{}
 
 	_, err := jsonparser.ArrayEach(in, func(prop []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -138,7 +122,7 @@ func (g GraphSONv3Parser) parseVertexProperties(in []byte) ([]VertexPropertyReco
 
 // ParseVertexProperty expects the input to be valid JSON and to be a single VertexRecord Property record. See either the testing file for sample
 // vertex json records or http://tinkerpop.apache.org/docs/3.4.2/dev/io/#_vertexproperty_3.
-func (g GraphSONv3Parser) ParseVertexProperty(in []byte) (property VertexPropertyRecord, err error) {
+func (g GraphSONv3Parser) ParseVertexProperty(in []byte) (property graphson.VertexPropertyRecord, err error) {
 	property.Properties = map[string]graphson.ValuePair{}
 
 	if typeName, err := jsonparser.GetString(in, "@type"); err != nil || typeName != vertexPropertyTypeName {
