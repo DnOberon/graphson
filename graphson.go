@@ -42,7 +42,8 @@ const (
 )
 
 // GraphSONParser enforces a standard set of functions that a GraphSON parser must satisfy. It is up to the individual
-// implementer to handle the parsing of any data types apart from Vertex, Vertex Property, Edge, Property, TinkerGraph, and Path.
+// implementer to handle the parsing of any data types apart from Vertex, Vertex Property, Edge, and Property.
+// *Note:* TinkerGraph and Path are absent from this list and interface as we believe they're considered legacy types.
 type GraphSONParser interface {
 	Parse(in []byte) (ValuePair, error)
 	ParseVertex(in []byte) (VertexRecord, error)
