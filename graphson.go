@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package graphson provides a parser for GraphSON structured json data. This interface is primarily consumed by the
-// gremlin go language variant. It provides a GraphSON version agnostic interface to the user, though only GraphSON 3.0+ is
+// Package graphson provides a parser for GraphSON structured json data. This interface is primarily consumed by a
+// Gremlin Go language variant. It provides a GraphSON version agnostic interface to the user, though only GraphSON 3.0+ is
 // currently covered. Visit http://tinkerpop.apache.org/docs/3.4.2/dev/io/#graphson-3d0 for more information. This is not
 // intended to handle things like
 package graphson
