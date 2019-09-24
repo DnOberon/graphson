@@ -215,7 +215,7 @@ func (vp ValuePair) AsTime() time.Time {
 	return vp.Value.(time.Time)
 }
 
-func (vp ValuePair) AsClAss() string {
+func (vp ValuePair) AsClass() string {
 	if vp.Type != Class {
 		return ""
 	}
