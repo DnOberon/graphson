@@ -30,8 +30,7 @@ func (g GraphSONv3Parser) ParseVertex(in []byte) (v graphson.VertexRecord, err e
 	parsingErrors := graphson.ParsingErrors{}
 
 	jsonparser.EachKey(in, func(idx int, value []byte, vt jsonparser.ValueType, err error) {
-		currentError := graphson.ParsingError{nil, strings.Join(paths[idx], " "), "parseVertex"}
-
+		var currentError = graphson.ParsingError{nil, strings.Join(paths[idx], " "), "parseVertex"}
 		if err != nil {
 			currentError.Message = err.Error()
 			parsingErrors = append(parsingErrors, currentError)
