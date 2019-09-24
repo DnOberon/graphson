@@ -160,12 +160,12 @@ func (vp ValuePair) AsSet() []ValuePair {
 	return vp.Value.([]ValuePair)
 }
 
-func (vp ValuePair) AsMap() map[ValuePair]ValuePair {
+func (vp ValuePair) AsFlatMap() map[interface{}]interface{} {
 	if vp.Type != Map {
 		return nil
 	}
 
-	return vp.Value.(map[ValuePair]ValuePair)
+	return vp.Value.(map[interface{}]interface{})
 }
 
 func (vp ValuePair) AsString() string {

@@ -20,6 +20,14 @@ func TestSetParse(t *testing.T) {
 	assert.Equal(t, true, set[2].Value)
 }
 
+func TestMapParse(t *testing.T) {
+	g := GraphSONv3Parser{}
+	m, err := g.parseFlatMap([]byte(map30))
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, m)
+}
+
 func TestClassParse(t *testing.T) {
 	g := GraphSONv3Parser{}
 	out, err := g.parseClass([]byte(class30))

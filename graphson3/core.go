@@ -63,13 +63,13 @@ func (g GraphSONv3Parser) parseSet(in []byte) ([]graphson.ValuePair, error) {
 		return nil, err
 	}
 
-	if vt != graphson.Set {
-		return nil, graphson.ParsingError{Message: "provided input not a g:Set type", Operation: "parseSet", Field: "@type"}
+	if vt != graphson.Set && vt != graphson.List {
+		return nil, graphson.ParsingError{Message: "provided input not a g:Set or g:List type", Operation: "parseSet", Field: "@type"}
 	}
 
 	value, dt, _, err := jsonparser.Get(in, "@value")
 	if dt != jsonparser.Array {
-		return nil, graphson.ParsingError{Message: "provided input not a valid g:Set type, bad array", Operation: "parseSet", Field: "@type"}
+		return nil, graphson.ParsingError{Message: "provided input not a valid g:Set or g:List type, bad array", Operation: "parseSet", Field: "@type"}
 	}
 
 	parsingErrors := graphson.ParsingErrors{}
@@ -95,8 +95,8 @@ func (g GraphSONv3Parser) parseSet(in []byte) ([]graphson.ValuePair, error) {
 	return out, parsingErrors.Combine()
 }
 
-func (g GraphSONv3Parser) parseMap(in []byte) (map[interface{}]interface{}, error) {
-	out := map[interface{}]interface{}{}
+func (g GraphSONv3Parser) parseFlatMap(in []byte) ([]graphson.ValuePair, error) {
+	ordered := []graphson.ValuePair{}
 
 	vt, err := getValueType(in)
 	if err != nil {
@@ -107,7 +107,34 @@ func (g GraphSONv3Parser) parseMap(in []byte) (map[interface{}]interface{}, erro
 		return nil, graphson.ParsingError{Message: "provided input not a g:Map type", Operation: "parseMap", Field: "@type"}
 	}
 
-	return out, nil
+	value, dt, _, err := jsonparser.Get(in, "@value")
+	if dt != jsonparser.Array {
+		return nil, graphson.ParsingError{Message: "provided input not a valid g:Map type, bad array", Operation: "parseMap", Field: "@type"}
+	}
+
+	parsingErrors := graphson.ParsingErrors{}
+	_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		currentError := graphson.ParsingError{Operation: "parseMap", Field: "@value"}
+
+		if err != nil {
+			currentError.Message = err.Error()
+			parsingErrors = append(parsingErrors, currentError)
+			return
+		}
+
+		vp, err := g.Parse(value)
+		if err != nil {
+			currentError.Message = err.Error()
+			parsingErrors = append(parsingErrors, currentError)
+			return
+		}
+
+		ordered = append(ordered, vp)
+
+	})
+
+	// because g:Map relies so heavily on element order it is suggested that results are always ignored if any error is present
+	return ordered, nil
 }
 
 func (g GraphSONv3Parser) parseInt32(in []byte) (int, error) {
