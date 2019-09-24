@@ -18,7 +18,31 @@
 // intended to handle things like
 package graphson
 
-import "time"
+import (
+	"sync"
+	"time"
+)
+
+var (
+	parsersMu sync.RWMutex
+	parsers   = make(map[string]GraphSONParser)
+)
+
+// RegisterParser allows an outside package to register a GraphSONParser compatible type with this package.
+func RegisterParser(name string, parser GraphSONParser) {
+	parsersMu.Lock()
+	defer parsersMu.Unlock()
+
+	if parser == nil {
+		panic("GraphSONParser is nil for provider " + name)
+	}
+
+	parsers[name] = parser
+}
+
+func NewParser(parserVersion string) GraphSONParser {
+	return parsers[parserVersion]
+}
 
 // ValueType represents the GraphSON equivalent type of a value in a ValuePair type.
 type ValueType int

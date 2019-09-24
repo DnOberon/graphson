@@ -88,3 +88,7 @@ func valueTypeFromString(raw string) graphson.ValueType {
 		return graphson.Unknown
 	}
 }
+
+func init() {
+	graphson.RegisterParser("v3", GraphSONv3Parser{})
+}
